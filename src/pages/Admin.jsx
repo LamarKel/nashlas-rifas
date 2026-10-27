@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase, money, pad } from '../lib/supabase'
+import { optimizarImagen, kb } from '../lib/imagen'
 
 export default function Admin() {
   const [session, setSession] = useState(null)
@@ -252,6 +253,49 @@ function Ganador() {
   )
 }
 
+/* ---------- Imagen del premio ---------- */
+function ImagenPremio({ value, onChange }) {
+  const [subiendo, setSubiendo] = useState(false)
+  const [info, setInfo] = useState('')
+  const [modoUrl, setModoUrl] = useState(false)
+
+  const subir = async (f) => {
+    if (!f) return
+    setSubiendo(true); setInfo('Optimizando…')
+    try {
+      const r = await optimizarImagen(f, { maxLado: 1600, calidad: 0.82 })
+      setInfo(`Subiendo ${kb(r.despues)}…`)
+      const path = `${new Date().getFullYear()}/${crypto.randomUUID()}.webp`
+      const { error } = await supabase.storage.from('premios').upload(path, r.file, { contentType: 'image/webp', cacheControl: '31536000' })
+      if (error) throw error
+      const { data } = supabase.storage.from('premios').getPublicUrl(path)
+      onChange(data.publicUrl)
+      setInfo(`Optimizada: ${kb(r.antes)} → ${kb(r.despues)} · ${r.ancho}×${r.alto} WebP`)
+    } catch (e) {
+      setInfo('Error: ' + (e.message || 'no se pudo subir'))
+    } finally {
+      setSubiendo(false)
+    }
+  }
+
+  return (
+    <div className="img-premio">
+      <span className="lbl">Imagen del premio</span>
+      {value && <img src={value} alt="Premio" />}
+      <div className="row gap">
+        <label className="btn ghost file-btn">
+          {subiendo ? 'Procesando…' : value ? 'Cambiar imagen' : 'Subir imagen'}
+          <input type="file" accept="image/*" disabled={subiendo} onChange={(e) => subir(e.target.files[0])} />
+        </label>
+        <button type="button" className="chip" onClick={() => setModoUrl(!modoUrl)}>{modoUrl ? 'Ocultar URL' : 'Usar URL'}</button>
+        {value && <button type="button" className="chip" onClick={() => { onChange(''); setInfo('') }}>Quitar</button>}
+      </div>
+      {modoUrl && <input placeholder="https://…" value={value} onChange={(e) => onChange(e.target.value)} />}
+      {info && <small className="muted">{info}</small>}
+    </div>
+  )
+}
+
 /* ---------- Dinámicas ---------- */
 const PAQUETES_BASE = [
   { nombre: 'BRONCE', cantidad: 2 }, { nombre: 'PLATA', cantidad: 5 },
@@ -329,7 +373,7 @@ function Dinamicas() {
         </select>
         <small className="muted">Pick 4 para 10,000 números (0000–9999), Pick 5 para 100,000.</small>
       </label>
-      <label>URL de imagen del premio<input value={form.imagen_url || ''} onChange={set('imagen_url')} /></label>
+      <ImagenPremio value={form.imagen_url || ''} onChange={(url) => setForm({ ...form, imagen_url: url })} />
       <label>Descripción<textarea rows={3} value={form.descripcion || ''} onChange={set('descripcion')} /></label>
 
       <h4>Paquetes</h4>

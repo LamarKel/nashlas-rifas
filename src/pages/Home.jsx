@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase, money, pad, soloDigitos, WHATSAPP } from '../lib/supabase'
+import { optimizarImagen } from '../lib/imagen'
 
 export default function Home() {
   const [din, setDin] = useState(null)
@@ -128,7 +129,7 @@ function Checkout({ din, metodos, cantidad, setCantidad }) {
     setError('')
     if (!f) return
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(f.type)) return setError('El comprobante debe ser JPG, PNG o WEBP.')
-    if (f.size > 5 * 1024 * 1024) return setError('El comprobante pesa más de 5MB.')
+    if (f.size > 20 * 1024 * 1024) return setError('El comprobante pesa más de 20MB.')
     setFile(f)
   }
 
@@ -144,9 +145,11 @@ function Checkout({ din, metodos, cantidad, setCantidad }) {
 
     setEnviando(true)
     try {
-      const ext = file.name.split('.').pop().toLowerCase()
+      let subir = file
+      try { subir = (await optimizarImagen(file, { maxLado: 1800, calidad: 0.85 })).file } catch { /* usa el original */ }
+      const ext = subir.type === 'image/webp' ? 'webp' : file.name.split('.').pop().toLowerCase()
       const path = `${din.id}/${crypto.randomUUID()}.${ext}`
-      const up = await supabase.storage.from('comprobantes').upload(path, file, { contentType: file.type })
+      const up = await supabase.storage.from('comprobantes').upload(path, subir, { contentType: subir.type })
       if (up.error) throw up.error
       const { data, error } = await supabase.rpc('crear_compra', {
         p_dinamica: din.id, p_nombre: nombre, p_telefono: soloDigitos(tel), p_cantidad: cantidad,
@@ -222,7 +225,7 @@ function Checkout({ din, metodos, cantidad, setCantidad }) {
 
         <label className="upload">
           <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => onFile(e.target.files[0])} />
-          {preview ? <img src={preview} alt="Comprobante" /> : <span>Toca para subir tu comprobante<br /><small>JPG, PNG o WEBP · máx. 5MB</small></span>}
+          {preview ? <img src={preview} alt="Comprobante" /> : <span>Toca para subir tu comprobante<br /><small>JPG, PNG o WEBP</small></span>}
         </label>
 
         <label>Referencia de la transferencia (opcional)
