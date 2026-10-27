@@ -7,6 +7,7 @@ export default function Home() {
   const [paquetes, setPaquetes] = useState([])
   const [metodos, setMetodos] = useState([])
   const [disp, setDisp] = useState(null)
+  const [prog, setProg] = useState(null)
   const [cargando, setCargando] = useState(true)
   const [cantidad, setCantidad] = useState(null)
   const [custom, setCustom] = useState(false)
@@ -20,9 +21,9 @@ export default function Home() {
         const [{ data: p }, { data: m }, { data: n }] = await Promise.all([
           supabase.from('paquetes').select('*').eq('dinamica_id', d.id).order('orden'),
           supabase.from('metodos_pago').select('*').eq('activo', true).order('orden'),
-          supabase.rpc('disponibles', { p_dinamica: d.id }),
+          supabase.rpc('progreso', { p_dinamica: d.id }),
         ])
-        setPaquetes(p || []); setMetodos(m || []); setDisp(n)
+        setPaquetes(p || []); setMetodos(m || []); setProg(n); setDisp(n?.disponibles ?? null)
       }
       setCargando(false)
     })()
@@ -36,8 +37,9 @@ export default function Home() {
     </section>
   )
 
-  const vendidos = disp != null ? din.total_numeros - disp : 0
-  const pct = Math.min(100, Math.round((vendidos / din.total_numeros) * 100))
+  const raw = prog?.meta ? (prog.vendidos / prog.meta) * 100 : 0
+  const pct = Math.min(100, raw)
+  const pctTxt = raw > 0 && raw < 10 ? raw.toFixed(1) : Math.round(pct)
 
   return (
     <>
@@ -50,8 +52,8 @@ export default function Home() {
           <span>{money(din.precio_numero)} <small>por número</small></span>
           {din.fecha_sorteo && <span>Sorteo: {new Date(din.fecha_sorteo).toLocaleDateString('es-DO', { day: 'numeric', month: 'long', year: 'numeric' })}</span>}
         </div>
-        <div className="progress"><div style={{ width: pct + '%' }} /></div>
-        <p className="muted small">{pct}% vendido</p>
+        <div className="progress"><div style={{ width: (pct > 0 ? Math.max(pct, 2) : 0) + '%' }} /></div>
+        <p className="muted small">{pctTxt}% vendido</p>
       </section>
 
       {cantidad == null ? (

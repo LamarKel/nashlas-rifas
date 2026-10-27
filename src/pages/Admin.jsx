@@ -311,6 +311,11 @@ function Dinamicas() {
           {['borrador', 'activa', 'cerrada', 'sorteada'].map((x) => <option key={x}>{x}</option>)}</select></label>
         <label>Precio por número (RD$)<input type="number" step="0.01" required value={form.precio_numero} onChange={set('precio_numero')} /></label>
         <label>Total de números<input type="number" required value={form.total_numeros} onChange={set('total_numeros')} disabled={!!form.id} /></label>
+        <label>Meta de venta (barra de progreso)
+          <input type="number" min="1" placeholder="Vacío = total de números" value={form.meta_numeros ?? ''} onChange={(e) => setForm({ ...form, meta_numeros: e.target.value === '' ? null : parseInt(e.target.value) })} />
+          <small className="muted">La barra muestra vendidos ÷ meta. Ej. 2000 números para cubrir el premio.</small>
+        </label>
+        <label className="check"><input type="checkbox" checked={form.contar_pendientes ?? true} onChange={(e) => setForm({ ...form, contar_pendientes: e.target.checked })} /> Contar compras pendientes en la barra</label>
         <label>Compra mínima<input type="number" required value={form.min_compra} onChange={set('min_compra')} /></label>
         <label>Fecha del sorteo<input type="datetime-local" value={form.fecha_sorteo?.slice(0, 16) || ''} onChange={set('fecha_sorteo')} /></label>
       </div>
