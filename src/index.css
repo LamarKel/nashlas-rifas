@@ -201,3 +201,21 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--cafe); bord
   .v-fila > span:first-child { grid-column: 1 / -1; }
   .v-fila > span[data-l]::before { content: attr(data-l); display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
 }
+
+/* Lista de rifas */
+.hero-sm { padding: 36px 20px 30px; }
+.rifas { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+.rifa-card { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--borde); border-radius: var(--radio); overflow: hidden; text-decoration: none; color: var(--texto); transition: transform .15s, box-shadow .15s; }
+.rifa-card:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(61,40,20,.14); }
+.rifa-img { aspect-ratio: 4/3; background: var(--cafe); display: grid; place-items: center; }
+.rifa-img img { width: 100%; height: 100%; object-fit: cover; }
+.rifa-img span { font-family: 'Italiana', serif; font-size: 34px; letter-spacing: .1em; color: var(--crema); }
+.rifa-body { padding: 18px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.rifa-body h3 { margin: 0; font-family: 'Italiana', serif; font-weight: 400; font-size: 26px; color: var(--cafe); }
+.rifa-body p { margin: 0; }
+.rifa-body .btn { margin-top: auto; }
+.rifa-meta { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.progress.claro { max-width: none; margin: 4px 0 0; background: var(--crema); }
+.progress.claro div { background: var(--cafe); }
+.volver { display: inline-block; color: var(--crema); opacity: .85; text-decoration: none; font-size: 14px; margin-bottom: 14px; }
+.btn.light { background: var(--crema); color: var(--cafe); margin-top: 10px; }
