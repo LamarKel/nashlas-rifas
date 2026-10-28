@@ -16,8 +16,9 @@ export default function Rifa() {
 
   useEffect(() => {
     ;(async () => {
+      const esUuid = /^[0-9a-f-]{36}$/i.test(id)
       const { data: d } = await supabase.from('dinamicas').select('*')
-        .eq('id', id).eq('estado', 'activa').maybeSingle()
+        .eq(esUuid ? 'id' : 'slug', id).eq('estado', 'activa').maybeSingle()
       setDin(d)
       if (d) {
         const [{ data: p }, { data: m }, { data: n }] = await Promise.all([
@@ -31,7 +32,18 @@ export default function Rifa() {
     })()
   }, [id])
 
-  if (cargando) return <div className="center pad"><div className="spinner" /> Cargando rifa…</div>
+  if (cargando) return (
+    <>
+      <section className="hero">
+        <div className="sk sk-hero-img" />
+        <div className="sk sk-hero-t" />
+        <div className="sk sk-hero-l" />
+      </section>
+      <section className="section">
+        <div className="paquetes">{[0, 1, 2, 3].map((i) => <div key={i} className="paquete sk sk-paq" />)}</div>
+      </section>
+    </>
+  )
   if (!din) return (
     <section className="hero">
       <h1 className="display sm-light">Esta rifa no está disponible</h1>

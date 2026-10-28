@@ -8,7 +8,7 @@ export default function Home() {
   useEffect(() => {
     ;(async () => {
       const { data } = await supabase.from('dinamicas')
-        .select('id,titulo,imagen_url,precio_numero,fecha_sorteo,created_at')
+        .select('id,slug,titulo,imagen_url,precio_numero,fecha_sorteo,created_at')
         .eq('estado', 'activa').order('created_at', { ascending: false })
       const lista = data || []
       const progresos = await Promise.all(lista.map((d) => supabase.rpc('progreso', { p_dinamica: d.id })))
@@ -16,7 +16,17 @@ export default function Home() {
     })()
   }, [])
 
-  if (!rifas) return <div className="center pad"><div className="spinner" /> Cargando rifas…</div>
+  if (!rifas) return (
+    <>
+      <section className="hero hero-sm">
+        <p className="eyebrow">Rifas activas</p>
+        <h1 className="display">Elige tu rifa</h1>
+      </section>
+      <section className="section">
+        <div className="rifas">{[0, 1, 2].map((i) => <TarjetaCargando key={i} />)}</div>
+      </section>
+    </>
+  )
 
   if (rifas.length === 0) return (
     <section className="hero">
@@ -38,7 +48,7 @@ export default function Home() {
             const pct = Math.min(100, raw)
             const pctTxt = raw > 0 && raw < 10 ? raw.toFixed(1) : Math.round(pct)
             return (
-              <Link key={r.id} to={`/rifa/${r.id}`} className="rifa-card">
+              <Link key={r.id} to={`/rifa/${r.slug || r.id}`} className="rifa-card">
                 <div className="rifa-img">
                   {r.imagen_url ? <img src={r.imagen_url} alt={r.titulo} loading="lazy" /> : <span>NASHLA´S</span>}
                 </div>
@@ -58,5 +68,20 @@ export default function Home() {
         </div>
       </section>
     </>
+  )
+}
+
+function TarjetaCargando() {
+  return (
+    <div className="rifa-card skel" aria-hidden="true">
+      <div className="rifa-img sk" />
+      <div className="rifa-body">
+        <div className="sk sk-t" />
+        <div className="sk sk-l" />
+        <div className="sk sk-bar" />
+        <div className="sk sk-s" />
+        <div className="sk sk-btn" />
+      </div>
+    </div>
   )
 }

@@ -219,3 +219,20 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--cafe); bord
 .progress.claro div { background: var(--cafe); }
 .volver { display: inline-block; color: var(--crema); opacity: .85; text-decoration: none; font-size: 14px; margin-bottom: 14px; }
 .btn.light { background: var(--crema); color: var(--cafe); margin-top: 10px; }
+
+/* Tarjetas cargando (skeleton) */
+.sk { background: linear-gradient(90deg, var(--crema) 25%, var(--crema-2) 50%, var(--crema) 75%); background-size: 200% 100%; animation: sk 1.3s ease-in-out infinite; border-radius: 8px; }
+.hero .sk { background: linear-gradient(90deg, rgba(239,227,208,.18) 25%, rgba(239,227,208,.32) 50%, rgba(239,227,208,.18) 75%); background-size: 200% 100%; }
+@keyframes sk { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.skel { pointer-events: none; }
+.rifa-img.sk { border-radius: 0; }
+.sk-t { height: 26px; width: 70%; }
+.sk-l { height: 16px; width: 45%; }
+.sk-bar { height: 8px; width: 100%; border-radius: 99px; }
+.sk-s { height: 12px; width: 30%; }
+.sk-btn { height: 44px; width: 100%; border-radius: 99px; margin-top: 8px; }
+.sk-hero-img { width: min(560px, 100%); aspect-ratio: 4/3; margin: 0 auto 20px; border-radius: var(--radio); }
+.sk-hero-t { height: 48px; width: min(420px, 80%); margin: 10px auto; }
+.sk-hero-l { height: 18px; width: min(300px, 60%); margin: 10px auto; }
+.sk-paq { height: 170px; border: none; }
+@media (prefers-reduced-motion: reduce) { .sk { animation: none; } }

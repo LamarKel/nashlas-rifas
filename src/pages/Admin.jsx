@@ -363,7 +363,7 @@ function Dinamicas() {
 
   const guardar = async (e) => {
     e.preventDefault()
-    const { paquetes, id, created_at, numero_ganador, ...d } = form
+    const { paquetes, id, created_at, numero_ganador, slug, ...d } = form
     d.fecha_sorteo = d.fecha_sorteo || null
     let dinId = id
     if (id) {
@@ -443,11 +443,15 @@ function Dinamicas() {
         <div className="card fila-card" key={d.id}>
           <div>
             <strong>{d.titulo}</strong> <span className={'badge ' + (d.estado === 'activa' ? 'ok' : '')}>{d.estado}</span>
-            <p className="small muted">{money(d.precio_numero)} · {d.total_numeros} números{d.numero_ganador != null ? ` · Ganador: ${pad(d.numero_ganador, d.total_numeros)}` : ''}</p>
+            <p className="small muted">{d.slug ? `/rifa/${d.slug} · ` : ''}{money(d.precio_numero)} · {d.total_numeros} números{d.numero_ganador != null ? ` · Ganador: ${pad(d.numero_ganador, d.total_numeros)}` : ''}</p>
           </div>
           <div className="row gap">
             <button className="chip" onClick={() => setForm({ ...d, paquetes: d.paquetes.sort((a, b) => a.orden - b.orden) })}>Editar</button>
             <button className="chip" onClick={() => ganador(d)}>Marcar ganador</button>
+            {d.slug && <button className="chip" onClick={async () => {
+              const url = `${window.location.origin}/rifa/${d.slug}`
+              try { await navigator.clipboard.writeText(url); alert('Link copiado:\n' + url) } catch { prompt('Copia el link:', url) }
+            }}>Copiar link</button>}
           </div>
         </div>
       ))}
