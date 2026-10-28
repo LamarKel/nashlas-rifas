@@ -173,7 +173,7 @@ function Checkout({ din, metodos, cantidad, setCantidad }) {
       if (error) throw error
       setResultado(data)
     } catch (err) {
-      setError(err.message || 'No se pudo completar la compra.')
+      setError(mensajeCompra(err))
     } finally {
       setEnviando(false)
     }
@@ -280,4 +280,13 @@ export function LogoBanco({ m, chico }) {
       {m?.logo_url ? <img src={m.logo_url} alt="" /> : <span>{(m?.banco || '?').trim().charAt(0).toUpperCase()}</span>}
     </span>
   )
+}
+
+// Solo mostramos al cliente mensajes pensados para él, nunca errores internos.
+function mensajeCompra(err) {
+  const m = String(err?.message || '')
+  if (m.includes('Compra mínima')) return m.replace(/\.$/, '') + '.'
+  if (m.includes('No quedan suficientes')) return 'No quedan suficientes números disponibles en esta rifa. Prueba con una cantidad menor.'
+  if (m.includes('no disponible')) return 'Esta rifa ya no está disponible.'
+  return 'No se pudo completar la compra. Revisa tu conexión e intenta de nuevo.'
 }

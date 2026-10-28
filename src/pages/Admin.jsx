@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase, money, pad } from '../lib/supabase'
-import { optimizarImagen, kb } from '../lib/imagen'
+import { optimizarImagen } from '../lib/imagen'
 import { LogoBanco } from './Rifa'
 
 export default function Admin() {
@@ -36,7 +36,7 @@ function Login() {
   const entrar = async (e) => {
     e.preventDefault()
     const { error } = await supabase.auth.signInWithPassword({ email, password: pass })
-    if (error) setError(error.message)
+    if (error) setError(/confirm/i.test(error.message) ? 'Esta cuenta aún no está confirmada.' : 'Correo o contraseña incorrectos.')
   }
   return (
     <div className="admin-wrap section narrow">
@@ -113,7 +113,7 @@ function Compras() {
     let motivo = null
     if (!aprobar) { motivo = prompt('Motivo del rechazo (opcional):') ; if (motivo === null) return }
     const { error } = await supabase.rpc('validar_compra', { p_compra: c.id, p_aprobar: aprobar, p_motivo: motivo })
-    if (error) return alert(error.message)
+    if (error) return alert('No se pudo guardar. Intenta de nuevo.')
     setVer(null); cargar()
   }
 
@@ -244,7 +244,7 @@ function Ganador() {
     if (!confirm(`¿Registrar ${pad(res.numero, d.total_numeros)} como número ganador de "${d.titulo}"? La dinámica pasará a "sorteada".`)) return
     const { error } = await supabase.from('dinamicas')
       .update({ numero_ganador: res.numero, estado: 'sorteada', fecha_resultado: new Date().toISOString().slice(0, 10) }).eq('id', din)
-    if (error) return alert(error.message)
+    if (error) return alert('No se pudo guardar. Intenta de nuevo.')
     setDinamicas(dinamicas.map((x) => x.id === din ? { ...x, numero_ganador: res.numero, estado: 'sorteada' } : x))
     alert('Ganador registrado.')
   }
@@ -307,18 +307,17 @@ function ImagenPremio({ value, onChange }) {
 
   const subir = async (f) => {
     if (!f) return
-    setSubiendo(true); setInfo('Optimizando…')
+    setSubiendo(true); setInfo('Subiendo…')
     try {
       const r = await optimizarImagen(f, { maxLado: 1600, calidad: 0.82 })
-      setInfo(`Subiendo ${kb(r.despues)}…`)
       const path = `${new Date().getFullYear()}/${crypto.randomUUID()}.webp`
       const { error } = await supabase.storage.from('premios').upload(path, r.file, { contentType: 'image/webp', cacheControl: '31536000' })
       if (error) throw error
       const { data } = supabase.storage.from('premios').getPublicUrl(path)
       onChange(data.publicUrl)
-      setInfo(`Optimizada: ${kb(r.antes)} → ${kb(r.despues)} · ${r.ancho}×${r.alto} WebP`)
+      setInfo('Imagen lista.')
     } catch (e) {
-      setInfo('Error: ' + (e.message || 'no se pudo subir'))
+      setInfo('No se pudo subir la imagen. Intenta de nuevo.')
     } finally {
       setSubiendo(false)
     }
@@ -369,11 +368,11 @@ function Dinamicas() {
     let dinId = id
     if (id) {
       const { error } = await supabase.from('dinamicas').update(d).eq('id', id)
-      if (error) return alert(error.message)
+      if (error) return alert('No se pudo guardar. Intenta de nuevo.')
       await supabase.from('paquetes').delete().eq('dinamica_id', id)
     } else {
       const { data, error } = await supabase.from('dinamicas').insert(d).select().single()
-      if (error) return alert(error.message)
+      if (error) return alert('No se pudo guardar. Intenta de nuevo.')
       dinId = data.id
     }
     const rows = paquetes.filter((p) => p.cantidad > 0).map((p, i) => ({ dinamica_id: dinId, nombre: p.nombre, cantidad: +p.cantidad, etiqueta: p.etiqueta || null, orden: i }))
@@ -402,8 +401,8 @@ function Dinamicas() {
         <label>Precio por número (RD$)<input type="number" step="0.01" required value={form.precio_numero} onChange={set('precio_numero')} /></label>
         <label>Total de números<input type="number" required value={form.total_numeros} onChange={set('total_numeros')} disabled={!!form.id} /></label>
         <label>Meta de venta (barra de progreso)
-          <input type="number" min="1" placeholder="Vacío = total de números" value={form.meta_numeros ?? ''} onChange={(e) => setForm({ ...form, meta_numeros: e.target.value === '' ? null : parseInt(e.target.value) })} />
-          <small className="muted">La barra muestra vendidos ÷ meta. Ej. 2000 números para cubrir el premio.</small>
+          <input type="number" min="1" placeholder="Ej. 2000" value={form.meta_numeros ?? ''} onChange={(e) => setForm({ ...form, meta_numeros: e.target.value === '' ? null : parseInt(e.target.value) })} />
+          <small className="muted">Cantidad de números que quieres vender. La barra de progreso se llena según esta meta.</small>
         </label>
         <label className="check"><input type="checkbox" checked={form.contar_pendientes ?? true} onChange={(e) => setForm({ ...form, contar_pendientes: e.target.checked })} /> Contar compras pendientes en la barra</label>
         <label>Compra mínima<input type="number" required value={form.min_compra} onChange={set('min_compra')} /></label>
@@ -417,7 +416,6 @@ function Dinamicas() {
           <option>Lotería Nacional (RD)</option>
           <option>Sorteo en vivo por Instagram</option>
         </select>
-        <small className="muted">Pick 4 para 10,000 números (0000–9999), Pick 5 para 100,000.</small>
       </label>
       <ImagenPremio value={form.imagen_url || ''} onChange={(url) => setForm({ ...form, imagen_url: url })} />
       <label>Descripción<textarea rows={3} value={form.descripcion || ''} onChange={set('descripcion')} /></label>
@@ -432,7 +430,6 @@ function Dinamicas() {
         </div>
       ))}
       <button type="button" className="chip" onClick={() => setForm({ ...form, paquetes: [...form.paquetes, { nombre: '', cantidad: 0 }] })}>+ Paquete</button>
-      <p className="muted small">Solo debe haber una dinámica "activa" a la vez; la web muestra la más reciente.</p>
       <div className="row gap"><button className="btn">Guardar</button><button type="button" className="btn ghost" onClick={() => setForm(null)}>Cancelar</button></div>
     </form>
   )
@@ -474,7 +471,7 @@ function Cuentas() {
       const { error } = await supabase.storage.from('premios').upload(path, r.file, { contentType: 'image/webp', cacheControl: '31536000' })
       if (error) throw error
       setForm((fm) => ({ ...fm, logo_url: supabase.storage.from('premios').getPublicUrl(path).data.publicUrl }))
-    } catch (e) { alert('No se pudo subir el icono: ' + e.message) } finally { setSubiendo(false) }
+    } catch (e) { alert('No se pudo subir el icono. Intenta de nuevo.') } finally { setSubiendo(false) }
   }
   const [form, setForm] = useState(vacio)
 
@@ -488,7 +485,7 @@ function Cuentas() {
     e.preventDefault()
     const { id, ...d } = form
     const { error } = id ? await supabase.from('metodos_pago').update(d).eq('id', id) : await supabase.from('metodos_pago').insert({ ...d, orden: lista.length })
-    if (error) return alert(error.message)
+    if (error) return alert('No se pudo guardar. Intenta de nuevo.')
     setForm(vacio); cargar()
   }
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value })
@@ -510,7 +507,6 @@ function Cuentas() {
                 <input type="file" accept="image/*" disabled={subiendo} onChange={(e) => subirLogo(e.target.files[0])} /></label>
               {form.logo_url && <button type="button" className="chip" onClick={() => setForm({ ...form, logo_url: '' })}>Quitar</button>}
             </div>
-            <small className="muted">Imagen cuadrada (PNG o JPG). Se optimiza a WebP.</small>
           </div>
           <label className="check"><input type="checkbox" checked={form.activo} onChange={(e) => setForm({ ...form, activo: e.target.checked })} /> Activa</label>
         </div>
