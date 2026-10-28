@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase, money, pad, soloDigitos, WHATSAPP } from '../lib/supabase'
 import { optimizarImagen } from '../lib/imagen'
+import Tambor from '../components/Tambor'
 
 export default function Rifa() {
   const { id } = useParams()
@@ -61,19 +62,18 @@ export default function Rifa() {
       <section className="hero">
         <Link className="volver" to="/">← Todas las rifas</Link>
         {din.imagen_url && <img className="hero-img" src={din.imagen_url} alt={din.titulo} />}
-        <p className="eyebrow">Dinámica activa</p>
         <h1 className="display">{din.titulo}</h1>
         {din.descripcion && <p className="lead">{din.descripcion}</p>}
         <div className="hero-meta">
           <span>{money(din.precio_numero)} <small>por número</small></span>
           {din.fecha_sorteo && <span>Sorteo: {new Date(din.fecha_sorteo).toLocaleDateString('es-DO', { day: 'numeric', month: 'long', year: 'numeric' })}</span>}
         </div>
-        <div className="progress"><div style={{ width: (pct > 0 ? Math.max(pct, 2) : 0) + '%' }} /></div>
+        <div className="progress"><div className="llenar" style={{ '--w': (pct > 0 ? Math.max(pct, 2) : 0) + '%' }} /></div>
         <p className="muted small">{pctTxt}% vendido</p>
       </section>
 
       {cantidad == null ? (
-        <section className="section">
+        <section className="section entra" key="paquetes">
           <h2 className="title">Elige tu paquete de números</h2>
           <p className="muted center">A mayor cantidad, más oportunidades de ganar</p>
           <div className="paquetes">
@@ -182,15 +182,19 @@ function Checkout({ din, metodos, cantidad, setCantidad }) {
   if (resultado) {
     const nums = (resultado.numeros || []).map((n) => pad(n, din.total_numeros))
     return (
-      <section className="section card exito">
+      <section className="section card exito entra">
         <h2 className="title">¡Compra recibida!</h2>
-        <span className="badge">Pendiente de validación</span>
-        <p className="muted">Tus números asignados</p>
-        <div className="nums">{nums.map((n) => <span key={n}>{n}</span>)}</div>
+        <span className="badge">Reservados · pendiente de validación</span>
+        <p className="reserva-txt">Estos son tus <strong>{nums.length} números</strong>. Quedan <strong>reservados a tu nombre</strong> mientras validamos tu pago; nadie más los puede tomar.</p>
+        {nums.length <= 10 ? (
+          <div className="tambores">{(resultado.numeros || []).map((n, i) => <Tambor key={n} valor={n} tam="chico" retraso={i * 260} />)}</div>
+        ) : (
+          <div className="nums reservados">{nums.map((n) => <span key={n}>{n}</span>)}</div>
+        )}
         <button className="btn ghost" onClick={() => copiar(nums.join(', '), 'nums')}>{copiado === 'nums' ? '¡Copiados!' : 'Copiar mis números'}</button>
         <div className="aviso">
           <strong>No enviamos números por WhatsApp.</strong>
-          <p>En un máximo de 24 horas validamos tu pago. Luego entra al Verificador con tu teléfono para ver tus números aprobados.</p>
+          <p>Guarda o copia tus números. En un máximo de 24 horas validamos tu pago y quedan confirmados. Puedes verlos en cualquier momento en el Verificador con tu teléfono. Si el pago no se puede validar, la reserva se cancela.</p>
         </div>
         <Link className="btn block" to="/verificador">Ir al Verificador</Link>
       </section>
@@ -198,7 +202,7 @@ function Checkout({ din, metodos, cantidad, setCantidad }) {
   }
 
   return (
-    <section className="section">
+    <section className="section entra" key="checkout">
       <form className="card checkout" onSubmit={enviar}>
         <button type="button" className="back" onClick={() => setCantidad(null)}>← Cambiar paquete</button>
         <h2 className="title">Completa tu compra</h2>

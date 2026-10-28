@@ -77,7 +77,7 @@ function MisNumeros() {
           ) : res.porNumero ? (
             <div className="center">
               <div className="nums"><span>{fmt(res.filas[0].numero)}</span></div>
-              <p>{res.filas[0].estado === 'aprobada' ? <>Asignado a <strong>{res.filas[0].nombre}</strong></> : 'Este número está en validación.'}</p>
+              <p>{res.filas[0].estado === 'aprobada' ? <>Asignado a <strong>{res.filas[0].nombre}</strong></> : 'Este número está reservado y en validación.'}</p>
             </div>
           ) : (
             <>
@@ -85,8 +85,11 @@ function MisNumeros() {
                 <p className="small"><span className="badge ok">Aprobados</span> {aprobados.length} números</p>
                 <div className="nums">{aprobados.map((r) => <span key={r.numero}>{fmt(r.numero)}</span>)}</div>
               </>}
-              {pendientes.length > 0 && <div className="aviso"><strong>Tu compra está en validación</strong>
-                <p>{pendientes.length} números aparecerán aquí al aprobarse tu pago, normalmente en menos de 24 horas.</p></div>}
+              {pendientes.length > 0 && <>
+                <p className="small"><span className="badge">Reservados</span> {pendientes.length} números · pendientes de validación</p>
+                <div className="nums reservados">{pendientes.map((r) => <span key={r.numero}>{fmt(r.numero)}</span>)}</div>
+                <p className="muted small center">Están reservados a tu nombre. Quedan confirmados al validar tu pago, normalmente en menos de 24 horas.</p>
+              </>}
             </>
           )}
         </div>

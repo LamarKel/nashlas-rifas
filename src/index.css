@@ -259,3 +259,43 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--cafe); bord
 .sel-check { margin-left: auto; color: var(--cafe); flex-shrink: 0; }
 .sel-vacio { color: var(--muted); justify-content: center; cursor: default !important; }
 @keyframes selIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+/* Números reservados (pendientes) */
+.nums.reservados span { background: #fff; border: 1.5px dashed var(--cafe); color: var(--cafe); }
+.reserva-txt { max-width: 440px; margin: 12px auto 4px; font-size: 15px; }
+
+/* ===== Motion: tambores de números ===== */
+.tambor { display: inline-flex; gap: .12em; background: none; border: 0; padding: 0; color: inherit; cursor: pointer; font-family: 'Italiana', serif; line-height: 1; }
+.tambor:focus-visible { outline: 2px solid var(--crema); outline-offset: 8px; border-radius: 12px; }
+.t-celda { height: 1em; width: .78em; overflow: hidden; display: inline-block; position: relative; border-radius: .12em; }
+.t-tira { display: flex; flex-direction: column; transition: transform 1.6s cubic-bezier(.16, .84, .3, 1); will-change: transform; }
+.t-tira span { height: 1em; display: grid; place-items: center; }
+.tambor-grande { font-size: clamp(72px, 18vw, 148px); margin-bottom: 6px; }
+.tambor-grande .t-celda { background: rgba(239,227,208,.1); box-shadow: inset 0 .08em .12em rgba(0,0,0,.18), inset 0 -.08em .12em rgba(0,0,0,.12); }
+.tambor-chico { font-size: 32px; color: var(--cafe); cursor: default; opacity: 1; gap: 0; padding: .14em .3em; border: 1.5px dashed var(--cafe); border-radius: 10px; background: var(--crema-2); }
+.tambor-chico .t-celda { width: .62em; }
+.tambores { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 14px; margin: 18px 0; }
+
+/* Hero de inicio */
+.hero-inicio { padding: 40px 20px 44px; }
+.hero-inicio .display { margin-top: 6px; }
+
+/* ===== Motion: entradas (una sola secuencia al cargar) ===== */
+.rifa-card { animation: subir .6s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i, 0) * 90ms + .5s); }
+@keyframes subir { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+.llenar { width: var(--w); animation: llenar 1.4s cubic-bezier(.2, .8, .2, 1) both; animation-delay: .9s; }
+@keyframes llenar { from { width: 0; } }
+.rifa-img img { transition: transform .6s cubic-bezier(.2, .8, .2, 1); }
+.rifa-card:hover .rifa-img img { transform: scale(1.04); }
+
+/* ===== Motion: respuesta a acciones ===== */
+.entra { animation: entra .45s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes entra { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.paquete:active { transform: scale(.96); }
+.btn { transition: background .2s, transform .15s; }
+.btn:active:not(:disabled) { transform: scale(.97); }
+
+@media (prefers-reduced-motion: reduce) {
+  .t-tira, .rifa-img img { transition: none; }
+  .rifa-card, .llenar, .entra { animation: none; }
+}

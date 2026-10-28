@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase, money } from '../lib/supabase'
+import Tambor from '../components/Tambor'
 
 export default function Home() {
   const [rifas, setRifas] = useState(null)
@@ -18,10 +19,7 @@ export default function Home() {
 
   if (!rifas) return (
     <>
-      <section className="hero hero-sm">
-        <p className="eyebrow">Rifas activas</p>
-        <h1 className="display">Elige tu rifa</h1>
-      </section>
+      <HeroInicio />
       <section className="section">
         <div className="rifas">{[0, 1, 2].map((i) => <TarjetaCargando key={i} />)}</div>
       </section>
@@ -37,18 +35,15 @@ export default function Home() {
 
   return (
     <>
-      <section className="hero hero-sm">
-        <p className="eyebrow">Rifas activas</p>
-        <h1 className="display">Elige tu rifa</h1>
-      </section>
+      <HeroInicio />
       <section className="section">
         <div className="rifas">
-          {rifas.map((r) => {
+          {rifas.map((r, idx) => {
             const raw = r.prog?.meta ? (r.prog.vendidos / r.prog.meta) * 100 : 0
             const pct = Math.min(100, raw)
             const pctTxt = raw > 0 && raw < 10 ? raw.toFixed(1) : Math.round(pct)
             return (
-              <Link key={r.id} to={`/rifa/${r.slug || r.id}`} className="rifa-card">
+              <Link key={r.id} to={`/rifa/${r.slug || r.id}`} className="rifa-card" style={{ '--i': idx }}>
                 <div className="rifa-img">
                   {r.imagen_url ? <img src={r.imagen_url} alt={r.titulo} loading="lazy" /> : <span>NASHLA´S</span>}
                 </div>
@@ -58,7 +53,7 @@ export default function Home() {
                     <span><strong>{money(r.precio_numero)}</strong> <small>por número</small></span>
                     {r.fecha_sorteo && <span className="muted small">Sorteo: {new Date(r.fecha_sorteo).toLocaleDateString('es-DO', { day: 'numeric', month: 'short' })}</span>}
                   </div>
-                  <div className="progress claro"><div style={{ width: (pct > 0 ? Math.max(pct, 2) : 0) + '%' }} /></div>
+                  <div className="progress claro"><div className="llenar" style={{ '--w': (pct > 0 ? Math.max(pct, 2) : 0) + '%' }} /></div>
                   <p className="muted small">{pctTxt}% vendido</p>
                   <span className="btn block">Jugar</span>
                 </div>
@@ -83,5 +78,15 @@ function TarjetaCargando() {
         <div className="sk sk-btn" />
       </div>
     </div>
+  )
+}
+
+function HeroInicio() {
+  return (
+    <section className="hero hero-inicio">
+      <Tambor />
+      <h1 className="display">Elige tu rifa</h1>
+      <p className="lead">Cuatro cifras, del 0000 al 9999. Una de ellas puede ser la tuya.</p>
+    </section>
   )
 }
