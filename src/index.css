@@ -187,3 +187,17 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--cafe); bord
 .img-premio small { display: block; margin-top: 6px; }
 .file-btn { position: relative; overflow: hidden; margin: 0 !important; padding: 10px 18px; }
 .file-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; margin: 0; }
+
+/* Ventas por rifa */
+.sel-rifa { max-width: 280px; margin: 0; }
+.ventas { margin-bottom: 22px; }
+.v-fila { display: grid; grid-template-columns: 1.6fr .8fr .8fr .8fr 1.2fr 1fr; gap: 10px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--borde); font-size: 14px; }
+.v-head { background: var(--crema-2); font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+.mini-bar { display: block; height: 6px; background: var(--crema); border-radius: 99px; overflow: hidden; margin-bottom: 4px; }
+.mini-bar span { display: block; height: 100%; background: var(--cafe); }
+@media (max-width: 700px) {
+  .v-head { display: none; }
+  .v-fila { grid-template-columns: 1fr 1fr; }
+  .v-fila > span:first-child { grid-column: 1 / -1; }
+  .v-fila > span[data-l]::before { content: attr(data-l); display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+}

@@ -80,19 +80,26 @@ function Compras() {
   const [stats, setStats] = useState({})
   const [ver, setVer] = useState(null)
   const [q, setQ] = useState('')
+  const [rifa, setRifa] = useState('')
+  const [resumen, setResumen] = useState([])
 
   const cargar = useCallback(async () => {
     let query = supabase.from('compras')
       .select('*, dinamicas(titulo,total_numeros), metodos_pago(banco), numeros(numero)')
       .eq('estado', estado).order('created_at', { ascending: estado === 'pendiente' }).limit(200)
+    if (rifa) query = query.eq('dinamica_id', rifa)
     if (q) query = query.or(`telefono.ilike.%${q}%,nombre.ilike.%${q}%`)
     const { data } = await query
     setLista(data || [])
-    const { data: all } = await supabase.from('compras').select('estado,total')
+    let qa = supabase.from('compras').select('estado,total')
+    if (rifa) qa = qa.eq('dinamica_id', rifa)
+    const { data: all } = await qa
     const s = { pendiente: 0, aprobada: 0, rechazada: 0, recaudado: 0 }
     ;(all || []).forEach((c) => { s[c.estado]++; if (c.estado === 'aprobada') s.recaudado += Number(c.total) })
     setStats(s)
-  }, [estado, q])
+    const { data: r } = await supabase.rpc('resumen_ventas')
+    setResumen(r || [])
+  }, [estado, q, rifa])
 
   useEffect(() => { cargar() }, [cargar])
 
@@ -111,12 +118,21 @@ function Compras() {
 
   return (
     <>
+      <div className="toolbar">
+        <h3>Resumen</h3>
+        <select className="sel-rifa" value={rifa} onChange={(e) => setRifa(e.target.value)}>
+          <option value="">Todas las rifas</option>
+          {resumen.map((r) => <option key={r.id} value={r.id}>{r.titulo} ({r.estado})</option>)}
+        </select>
+      </div>
       <div className="stats">
         <div><span>Pendientes</span><strong>{stats.pendiente ?? '—'}</strong></div>
         <div><span>Aprobadas</span><strong>{stats.aprobada ?? '—'}</strong></div>
         <div><span>Rechazadas</span><strong>{stats.rechazada ?? '—'}</strong></div>
         <div><span>Recaudado</span><strong>{money(stats.recaudado)}</strong></div>
       </div>
+      <VentasPorRifa resumen={rifa ? resumen.filter((r) => r.id === rifa) : resumen} />
+
       <div className="toolbar">
         <div className="seg">
           {['pendiente', 'aprobada', 'rechazada'].map((e) => (
@@ -158,6 +174,35 @@ function Compras() {
         </div>
       )}
     </>
+  )
+}
+
+/* ---------- Ventas por rifa ---------- */
+function VentasPorRifa({ resumen }) {
+  if (!resumen.length) return null
+  const n = (x) => Number(x || 0).toLocaleString('es-DO')
+  return (
+    <div className="tabla ventas">
+      <div className="v-fila v-head">
+        <span>Rifa</span><span>Vendidos</span><span>Pendientes</span><span>Disponibles</span><span>Meta</span><span>Recaudado</span>
+      </div>
+      {resumen.map((r) => {
+        const pct = r.meta ? Math.min(100, (r.vendidos / r.meta) * 100) : 0
+        return (
+          <div className="v-fila" key={r.id}>
+            <span><strong>{r.titulo}</strong><br /><span className={'badge ' + (r.estado === 'activa' ? 'ok' : '')}>{r.estado}</span></span>
+            <span data-l="Vendidos"><strong>{n(r.vendidos)}</strong></span>
+            <span data-l="Pendientes">{n(r.pendientes)}</span>
+            <span data-l="Disponibles">{n(r.disponibles)}</span>
+            <span data-l="Meta">
+              <span className="mini-bar"><span style={{ width: pct + '%' }} /></span>
+              <small>{pct > 0 && pct < 10 ? pct.toFixed(1) : Math.round(pct)}% de {n(r.meta)}</small>
+            </span>
+            <span data-l="Recaudado"><strong>{money(r.recaudado)}</strong></span>
+          </div>
+        )
+      })}
+    </div>
   )
 }
 
