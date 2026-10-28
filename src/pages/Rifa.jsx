@@ -226,14 +226,22 @@ function Checkout({ din, metodos, cantidad, setCantidad }) {
           </small>
         </label>
 
-        <label>Método de pago *
-          <select value={metodo} onChange={(e) => setMetodo(e.target.value)}>
-            {metodos.map((x) => <option key={x.id} value={x.id}>{x.banco}{x.tipo_cuenta ? ` · ${x.tipo_cuenta}` : ''}</option>)}
-          </select>
-        </label>
+        <div className="campo">¿A qué banco vas a transferir? *
+          <div className="bancos" role="radiogroup">
+            {metodos.map((x) => (
+              <button type="button" key={x.id} role="radio" aria-checked={x.id === metodo}
+                className={'banco' + (x.id === metodo ? ' activo' : '')} onClick={() => setMetodo(x.id)}>
+                <LogoBanco m={x} />
+                <span className="banco-nom">{x.banco}</span>
+                {x.tipo_cuenta && <span className="banco-tipo">{x.tipo_cuenta}</span>}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {m && (
-          <div className="cuenta">
+          <div className="cuenta entra" key={m.id}>
+            <div className="cuenta-top"><LogoBanco m={m} /><div><strong>{m.banco}</strong><div className="muted small">{m.tipo_cuenta}</div></div></div>
             <div><span className="muted small">Número de cuenta</span>
               <div className="row"><strong className="mono">{m.numero_cuenta}</strong>
                 <button type="button" className="chip" onClick={() => copiar(m.numero_cuenta, 'cta')}>{copiado === 'cta' ? 'Copiado' : 'Copiar'}</button></div></div>
@@ -263,5 +271,13 @@ function Checkout({ din, metodos, cantidad, setCantidad }) {
         <p className="muted small center">Tu compra será validada en máximo 24 horas.</p>
       </form>
     </section>
+  )
+}
+
+export function LogoBanco({ m, chico }) {
+  return (
+    <span className={'banco-logo' + (chico ? ' chico' : '')}>
+      {m?.logo_url ? <img src={m.logo_url} alt="" /> : <span>{(m?.banco || '?').trim().charAt(0).toUpperCase()}</span>}
+    </span>
   )
 }

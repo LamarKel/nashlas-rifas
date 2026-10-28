@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase, money, pad } from '../lib/supabase'
 import { optimizarImagen, kb } from '../lib/imagen'
+import { LogoBanco } from './Rifa'
 
 export default function Admin() {
   const [session, setSession] = useState(null)
@@ -85,7 +86,7 @@ function Compras() {
 
   const cargar = useCallback(async () => {
     let query = supabase.from('compras')
-      .select('*, dinamicas(titulo,total_numeros), metodos_pago(banco), numeros(numero)')
+      .select('*, dinamicas(titulo,total_numeros), metodos_pago(banco,logo_url), numeros(numero)')
       .eq('estado', estado).order('created_at', { ascending: estado === 'pendiente' }).limit(200)
     if (rifa) query = query.eq('dinamica_id', rifa)
     if (q) query = query.or(`telefono.ilike.%${q}%,nombre.ilike.%${q}%`)
@@ -146,7 +147,7 @@ function Compras() {
         {lista.length === 0 && <p className="muted center pad">Sin compras {estado}s.</p>}
         {lista.map((c) => (
           <div className="fila" key={c.id} onClick={() => abrir(c)}>
-            <div><strong>{c.nombre}</strong><br /><span className="muted small">{c.telefono} · {c.metodos_pago?.banco}</span></div>
+            <div><strong>{c.nombre}</strong><br /><span className="muted small banco-inline"><LogoBanco m={c.metodos_pago} chico />{c.telefono} · {c.metodos_pago?.banco}</span></div>
             <div className="small">{c.dinamicas?.titulo}<br /><span className="muted">{new Date(c.created_at).toLocaleString('es-DO')}</span></div>
             <div className="right"><strong>{money(c.total)}</strong><br /><span className="muted small">{c.cantidad} números</span></div>
           </div>
@@ -157,7 +158,7 @@ function Compras() {
         <div className="modal" onClick={() => setVer(null)}>
           <div className="card modal-body" onClick={(e) => e.stopPropagation()}>
             <h3>{ver.nombre}</h3>
-            <p className="small muted">{ver.telefono} · {ver.metodos_pago?.banco} · Ref: {ver.referencia || '—'}</p>
+            <p className="small muted banco-inline"><LogoBanco m={ver.metodos_pago} chico />{ver.telefono} · {ver.metodos_pago?.banco} · Ref: {ver.referencia || '—'}</p>
             <p><strong>{money(ver.total)}</strong> · {ver.cantidad} números</p>
             {ver.url ? <a href={ver.url} target="_blank" rel="noreferrer"><img className="comprobante" src={ver.url} alt="Comprobante" /></a> : <p className="muted">Comprobante no disponible</p>}
             {ver.numeros?.length > 0 && <div className="nums small">{ver.numeros.map((n) => <span key={n.numero}>{pad(n.numero, ver.dinamicas?.total_numeros || 10000)}</span>)}</div>}
@@ -229,7 +230,7 @@ function Ganador() {
     if (!din || isNaN(n)) return
     setCargando(true); setRes(null); setImg(null)
     const { data } = await supabase.from('numeros')
-      .select('numero, compras(id,nombre,telefono,estado,cantidad,total,referencia,created_at,validada_at,comprobante_path,metodos_pago(banco))')
+      .select('numero, compras(id,nombre,telefono,estado,cantidad,total,referencia,created_at,validada_at,comprobante_path,metodos_pago(banco,logo_url))')
       .eq('dinamica_id', din).eq('numero', n).maybeSingle()
     setCargando(false)
     setRes({ numero: n, compra: data?.compras || null })
@@ -462,7 +463,19 @@ function Dinamicas() {
 /* ---------- Cuentas ---------- */
 function Cuentas() {
   const [lista, setLista] = useState([])
-  const vacio = { banco: '', tipo_cuenta: 'Ahorros', numero_cuenta: '', titular: '', cedula_rnc: '', activo: true }
+  const vacio = { banco: '', tipo_cuenta: 'Ahorros', numero_cuenta: '', titular: '', cedula_rnc: '', activo: true, logo_url: '' }
+  const [subiendo, setSubiendo] = useState(false)
+  const subirLogo = async (f) => {
+    if (!f) return
+    setSubiendo(true)
+    try {
+      const r = await optimizarImagen(f, { maxLado: 256, calidad: 0.9 })
+      const path = `bancos/${crypto.randomUUID()}.webp`
+      const { error } = await supabase.storage.from('premios').upload(path, r.file, { contentType: 'image/webp', cacheControl: '31536000' })
+      if (error) throw error
+      setForm((fm) => ({ ...fm, logo_url: supabase.storage.from('premios').getPublicUrl(path).data.publicUrl }))
+    } catch (e) { alert('No se pudo subir el icono: ' + e.message) } finally { setSubiendo(false) }
+  }
   const [form, setForm] = useState(vacio)
 
   const cargar = async () => {
@@ -490,13 +503,22 @@ function Cuentas() {
           <label>Número de cuenta<input required value={form.numero_cuenta} onChange={set('numero_cuenta')} /></label>
           <label>Titular<input required value={form.titular} onChange={set('titular')} /></label>
           <label>Cédula / RNC<input value={form.cedula_rnc || ''} onChange={set('cedula_rnc')} /></label>
+          <div className="campo">Icono del banco
+            <div className="row gap logo-edit">
+              <LogoBanco m={form} />
+              <label className="btn ghost file-btn">{subiendo ? 'Subiendo…' : form.logo_url ? 'Cambiar icono' : 'Subir icono'}
+                <input type="file" accept="image/*" disabled={subiendo} onChange={(e) => subirLogo(e.target.files[0])} /></label>
+              {form.logo_url && <button type="button" className="chip" onClick={() => setForm({ ...form, logo_url: '' })}>Quitar</button>}
+            </div>
+            <small className="muted">Imagen cuadrada (PNG o JPG). Se optimiza a WebP.</small>
+          </div>
           <label className="check"><input type="checkbox" checked={form.activo} onChange={(e) => setForm({ ...form, activo: e.target.checked })} /> Activa</label>
         </div>
         <div className="row gap"><button className="btn">Guardar</button>{form.id && <button type="button" className="btn ghost" onClick={() => setForm(vacio)}>Cancelar</button>}</div>
       </form>
       {lista.map((m) => (
         <div className="card fila-card" key={m.id}>
-          <div><strong>{m.banco}</strong> · {m.tipo_cuenta} {!m.activo && <span className="badge">inactiva</span>}
+          <div className="banco-inline"><LogoBanco m={m} /><strong>{m.banco}</strong> · {m.tipo_cuenta} {!m.activo && <span className="badge">inactiva</span>}
             <p className="small muted mono">{m.numero_cuenta} · {m.titular}</p></div>
           <button className="chip" onClick={() => setForm(m)}>Editar</button>
         </div>

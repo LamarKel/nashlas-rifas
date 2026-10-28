@@ -86,7 +86,6 @@ function HeroInicio() {
     <section className="hero hero-inicio">
       <Tambor />
       <h1 className="display">Elige tu rifa</h1>
-      <p className="lead">Cuatro cifras, del 0000 al 9999. Una de ellas puede ser la tuya.</p>
     </section>
   )
 }
