@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { supabase, pad, WHATSAPP } from '../lib/supabase'
+import { supabase, pad, money, WHATSAPP } from '../lib/supabase'
+import Selector from '../components/Selector'
 
 export default function Verificador() {
   return (
@@ -20,8 +21,8 @@ function MisNumeros() {
   const [ultima, setUltima] = useState(0)
 
   useEffect(() => {
-    supabase.from('dinamicas').select('id,titulo,total_numeros,estado,numero_ganador')
-      .in('estado', ['activa', 'cerrada', 'sorteada']).order('created_at', { ascending: false })
+    supabase.from('dinamicas').select('id,titulo,total_numeros,imagen_url,precio_numero')
+      .eq('estado', 'activa').order('created_at', { ascending: false })
       .then(({ data }) => { setDinamicas(data || []); if (data?.[0]) setDin(data[0].id) })
   }, [])
 
@@ -31,7 +32,7 @@ function MisNumeros() {
   const buscar = async (e) => {
     e.preventDefault()
     const limpio = q.replace(/\D/g, '')
-    if (!din) return setError('Selecciona una dinámica.')
+    if (!din) return setError('Selecciona una rifa.')
     if (!limpio) return setError('Escribe tu teléfono o un número asignado.')
     if (limpio.length > 6 && limpio.length < 10) return setError('El teléfono debe tener 10 dígitos.')
     if (Date.now() - ultima < 3000) return setError('Espera unos segundos antes de buscar otra vez.')
@@ -48,11 +49,14 @@ function MisNumeros() {
   return (
     <>
       <form className="card" onSubmit={buscar}>
-        <label><span className="paso">Paso 1 de 2</span> Selecciona la dinámica
-          <select value={din} onChange={(e) => { setDin(e.target.value); setRes(null) }}>
-            {dinamicas.map((x) => <option key={x.id} value={x.id}>{x.titulo}{x.estado !== 'activa' ? ` (${x.estado})` : ''}</option>)}
-          </select>
-        </label>
+        <div className="campo"><span className="paso">Paso 1 de 2</span> Selecciona la rifa
+          <Selector
+            value={din}
+            placeholder={dinamicas.length ? 'Elige una rifa' : 'No hay rifas activas'}
+            onChange={(v) => { setDin(v); setRes(null) }}
+            opciones={dinamicas.map((x) => ({ value: x.id, label: x.titulo, sub: `${money(x.precio_numero)} por número`, img: x.imagen_url || null }))}
+          />
+        </div>
         <label><span className="paso">Paso 2 de 2</span> Tu teléfono o un número asignado
           <input inputMode="numeric" value={q} onChange={(e) => setQ(e.target.value)} placeholder="829 555 5555  o  0427" />
           <small className="muted">Usa el mismo teléfono que pusiste al comprar.</small>

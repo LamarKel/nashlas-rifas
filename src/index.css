@@ -236,3 +236,26 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--cafe); bord
 .sk-hero-l { height: 18px; width: min(300px, 60%); margin: 10px auto; }
 .sk-paq { height: 170px; border: none; }
 @media (prefers-reduced-motion: reduce) { .sk { animation: none; } }
+
+/* Selector con diseño */
+.campo { display: block; margin-bottom: 14px; font-size: 14px; font-weight: 500; }
+.sel { position: relative; margin-top: 6px; font-weight: 400; }
+.sel-btn { width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #fff; border: 1px solid var(--borde); border-radius: 12px; text-align: left; color: var(--texto); min-height: 56px; transition: border-color .15s, box-shadow .15s; }
+.sel-btn:hover { border-color: var(--cafe); }
+.sel.abierto .sel-btn, .sel-btn:focus-visible { outline: none; border-color: var(--cafe); box-shadow: 0 0 0 3px rgba(138,94,52,.15); }
+.sel-flecha { margin-left: auto; color: var(--cafe); flex-shrink: 0; transition: transform .2s; }
+.sel.abierto .sel-flecha { transform: rotate(180deg); }
+.sel-thumb { width: 40px; height: 40px; border-radius: 8px; overflow: hidden; flex-shrink: 0; background: var(--cafe); display: grid; place-items: center; }
+.sel-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.sel-thumb span { font-family: 'Italiana', serif; color: var(--crema); font-size: 20px; }
+.sel-txt { display: flex; flex-direction: column; min-width: 0; }
+.sel-label { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sel-sub { font-size: 12px; color: var(--muted); }
+.sel-lista { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 6px); margin: 0; padding: 6px; list-style: none; background: #fff; border: 1px solid var(--borde); border-radius: 14px; box-shadow: 0 16px 40px rgba(61,40,20,.18); max-height: 320px; overflow-y: auto; animation: selIn .15s ease-out; }
+.sel-lista li { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 10px; cursor: pointer; }
+.sel-lista li.foco { background: var(--crema-2); }
+.sel-lista li.activo { background: var(--crema); }
+.sel-lista li.activo .sel-label { color: var(--cafe); }
+.sel-check { margin-left: auto; color: var(--cafe); flex-shrink: 0; }
+.sel-vacio { color: var(--muted); justify-content: center; cursor: default !important; }
+@keyframes selIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
